@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Date, ForeignKey, Column, Table, select
 from datetime import date
-from typing import List
+from typing import List, Dict
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:hetaT-601@localhost:3306/library'
@@ -120,7 +120,7 @@ def get_members():
     
     return members_schema.jsonify(members)
 
-# Get a specific member based on his / her id
+# Get a specific member based on his / her member_id
 @app.route("/members/<int:member_id>", methods=['GET'])
 def get_member(member_id):
     member = db.session.get(Member, member_id)
@@ -129,10 +129,45 @@ def get_member(member_id):
     else:
         return member_schema.jsonify(member), 200
 
+# Update a specific member based on his / her member_id
+@app.route("/members/<int:member_id>", methods=["PUT"])
+def update_member(member_id):
+    # Validation
+    member = db.session.get(Member, member_id)
+    if not member:
+        return jsonify({"error": f"No member found with id: {member_id}"}), 404
+    
+    data = request.get_json()
+    if data is None: 
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    
+    # Attempt de-serialization w/ Marshmallow
+    try:
+        member_data: Dict = member_schema.load(data)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    # Update member object to have all supplied attributes from request body
+    for k,v in member_data.items():
+        setattr(member, k, v)
+        
+    db.session.commit() # commit member object based on it's new state
+    return member_schema.jsonify(member), 200
 
+# Delete a member based his / her id
+@app.route("/members/<int:member_id>", methods=['DELETE'])
+def delete_member(member_id):
+    member = db.session.get(Member, member_id)
+    if not member:
+        return jsonify({"error": f"No member with id: {member_id} found"}), 404
+    else:
+        db.session.delete(member)
+        db.session.commit()
+    return jsonify({"message": f"Member with id: {member_id} succesfully deleted!"}), 200
+    
     
 # Create the table
 with app.app_context():
     db.create_all()
     
-app.run(debug=True)
+app.run(debug=True, port=5001)
