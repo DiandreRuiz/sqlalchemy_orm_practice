@@ -8,7 +8,7 @@ from datetime import date
 from typing import List
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:<YOUR MYSQL PASSWORD>@localhost/<YOUR DATABASE>'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:hetaT-601@localhost:3306/library'
 
 # Create a base class for our models
 class Base(DeclarativeBase):
