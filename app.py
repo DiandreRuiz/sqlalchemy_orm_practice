@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String
+from sqlalchemy import String, Date, ForeignKey
 from datetime import date
 
 app = Flask(__name__)
@@ -27,7 +27,14 @@ class Member(Base):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     
 class Loan(Base):
-    __tablename_ = "loans"
+    __tablename__ = "loans"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    loan_date: Mapped[date] = mapped_column(Date)
+    member_id: Mapped[int] = mapped_column(ForeignKey(Member.id))
+    
+class Book(Base):
+    __tablename__ = "books"
     
     id: Mapped[int] = mapped_column(primary_key=True)
     author: Mapped[str] = mapped_column(String(255), nullable=False)
