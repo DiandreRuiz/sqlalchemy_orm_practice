@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Date, ForeignKey, Column
+from sqlalchemy import String, Date, ForeignKey, Column, Table
 from datetime import date
 from typing import List
 
@@ -18,6 +18,15 @@ db = SQLAlchemy(model_class=Base)
 # Adding our db extension to our app
 db.init_app(app)
 
+
+# Junction Table for Many-to-Many between loans & books tables
+loan_book = Table(
+    'loan_book',
+    Base.metadata,
+    Column('loan_id', ForeignKey("loans.id"), primary_key=True),
+    Column('book_id', ForeignKey("books.id"), primary_key=True)
+)
+
 class Member(Base):
     __tablename__ = "members"
     
@@ -27,7 +36,7 @@ class Member(Base):
     DOB: Mapped[date]
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     # We are linking 2 attributes, not classes: We list 'member' as the back_population target
-    loans: Mapped["Loan"] = relationship(back_populates="member")
+    loans: Mapped[List["Loan"]] = relationship(back_populates="member")
     
 class Loan(Base):
     __tablename__ = "loans"
@@ -35,8 +44,9 @@ class Loan(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     loan_date: Mapped[date] = mapped_column(Date)
     member_id: Mapped[int] = mapped_column(ForeignKey("members.id"))
-    
+    # We are linking 2 attributes again...
     member: Mapped["Member"] = relationship(back_populates="loans")
+    books: Mapped[List["Book"]] = relationship(secondary=loan_book, back_populates="loans")
     
 class Book(Base):
     __tablename__ = "books"
@@ -47,12 +57,9 @@ class Book(Base):
     desc: Mapped[str] = mapped_column(String(255), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     
-loan_book = db.Table(
-    'loan_book',
-    Base.metadata,
-    Column('loan_id', ForeignKey(Loan.id), primary_key=True),
-    Column('book_id', ForeignKey(Book.id), primary_key=True)
-)
+    loans: Mapped[List["Loan"]] = relationship(secondary=loan_book, back_populates="books")
+    
+
     
     
     
