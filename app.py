@@ -60,14 +60,21 @@ class Book(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     
     loans: Mapped[List["Loan"]] = relationship(secondary=loan_book, back_populates="books")
-    
+
+
+#======== SCHEMAS ========#
 # Marshmellow Schema Declarations
 class MemberSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Member
 member_schema = MemberSchema()
 members_schema = MemberSchema(many=True)
-    
+
+
+
+
+
+#======== ROUTES ========# 
 @app.route("/members", methods=['POST'])
 def create_member():
     
@@ -76,6 +83,7 @@ def create_member():
     # with member_schema.load(). We will follow this design pattern for
     # all routes.
     
+    # Validation
     data = request.get_json()
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
@@ -90,6 +98,7 @@ def create_member():
     if existing_member:
         return jsonify({"error": "Email already associated with an account"}), 400
     
+    # Creation of Member row
     new_member = Member(**member_data)
     db.session.add(new_member)
     db.session.commit()
