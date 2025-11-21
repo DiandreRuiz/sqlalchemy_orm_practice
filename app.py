@@ -74,7 +74,11 @@ members_schema = MemberSchema(many=True)
 
 
 
-#======== ROUTES ========# 
+#======== ROUTES ========#
+
+# /members
+
+# Create Member
 @app.route("/members", methods=['POST'])
 def create_member():
     
@@ -103,7 +107,30 @@ def create_member():
     db.session.add(new_member)
     db.session.commit()
     return member_schema.jsonify(new_member), 201
+
+# Get all Members
+@app.route("/members", methods=['GET'])
+def get_members():
+    query = select(Member)
+    # Returns a tuple, where:
+    # - 1st item is a Member object based on Member's class definition
+    # - All other items represent the values of respective columns for that row
+    # Scalars() returns the first item in the tuple which would be the Member object
+    members = db.session.execute(query).scalars().all()
     
+    return members_schema.jsonify(members)
+
+# Get a specific member based on his / her id
+@app.route("/members/<int:member_id>", methods=['GET'])
+def get_member(member_id):
+    query = select(Member).where(Member.id == member_id)
+    member = db.session.execute(query)
+    if not member:
+        return jsonify({"error": f"Member w/ id: {member_id} not found"}), 404
+    else:
+        return member_schema.jsonify(member), 200
+
+
     
 # Create the table
 with app.app_context():
