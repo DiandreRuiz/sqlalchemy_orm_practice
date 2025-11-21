@@ -123,8 +123,7 @@ def get_members():
 # Get a specific member based on his / her id
 @app.route("/members/<int:member_id>", methods=['GET'])
 def get_member(member_id):
-    query = select(Member).where(Member.id == member_id)
-    member = db.session.execute(query)
+    member = db.session.get(Member, member_id)
     if not member:
         return jsonify({"error": f"Member w/ id: {member_id} not found"}), 404
     else:
