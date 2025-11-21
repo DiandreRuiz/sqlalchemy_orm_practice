@@ -1,7 +1,9 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+from marshmallow import ValidationError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Date, ForeignKey, Column, Table
+from sqlalchemy import String, Date, ForeignKey, Column, Table, select
 from datetime import date
 from typing import List
 
@@ -12,12 +14,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:<YOUR MYSQL
 class Base(DeclarativeBase):
     pass
 
-# Instantiate SQLAlchemy database
-db = SQLAlchemy(model_class=Base)
 
-# Adding our db extension to our app
-db.init_app(app)
+db = SQLAlchemy(model_class=Base) # Instantiate SQLAlchemy database
+ma = Marshmallow() # Instantiate Marshmallow instance
 
+db.init_app(app) # Adding our db extension to our app
+ma.init_app(app) # Adding marshmallow extension to our app
 
 # Junction Table for Many-to-Many between loans & books tables
 loan_book = Table(
@@ -59,9 +61,39 @@ class Book(Base):
     
     loans: Mapped[List["Loan"]] = relationship(secondary=loan_book, back_populates="books")
     
-
+# Marshmellow Schema Declarations
+class MemberSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Member
+member_schema = MemberSchema()
+members_schema = MemberSchema(many=True)
     
+@app.route("/members", methods=['POST'])
+def create_member():
     
+    # We explicityly check if the json body is present since Flask's
+    # stubs type request.json as Any | None which is incompatible 
+    # with member_schema.load(). We will follow this design pattern for
+    # all routes.
+    
+    data = request.get_json()
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    
+    try:
+        member_data = member_schema.load(data)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    query = select(Member).where(Member.email == member_data['email']) # Checking our db for a member with this email
+    existing_member = db.session.execute(query).scalars().all()
+    if existing_member:
+        return jsonify({"error": "Email already associated with an account"}), 400
+    
+    new_member = Member(**member_data)
+    db.session.add(new_member)
+    db.session.commit()
+    return member_schema.jsonify(new_member), 201
     
     
 # Create the table
