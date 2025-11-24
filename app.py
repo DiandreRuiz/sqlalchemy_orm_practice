@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
+from flask_sqlalchemy import SQLAlchemy«
 from marshmallow import ValidationError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Date, ForeignKey, Column, Table, select
@@ -16,7 +15,7 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base) # Instantiate SQLAlchemy database
-ma = Marshmallow() # Instantiate Marshmallow instance
+
 
 db.init_app(app) # Adding our db extension to our app
 ma.init_app(app) # Adding marshmallow extension to our app
