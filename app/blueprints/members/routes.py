@@ -82,6 +82,16 @@ def update_member(member_id):
     
     return member_schema.jsonify(member), 200
 
+@members_bp.route("/most-active", methods=["GET"])
+def get_most_active():
+    query = select(Member)
+    members = db.session.execute(query).scalars().all()
+    
+    for member in members:
+        print(member.email, len(member.loans))
+    
+
+
 # Delete a member based his / her id
 @members_bp.route("/<int:member_id>", methods=['DELETE'])
 def delete_member(member_id):
