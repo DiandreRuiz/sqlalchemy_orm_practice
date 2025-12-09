@@ -89,8 +89,9 @@ def get_most_active():
     if not members:
         return jsonify({"message": "No members in system"}), 400
     
-    most_active = sorted(members, key=lambda m: len(m.loans))
-    print(most_active)
+    most_active = sorted(members, key=lambda m: len(m.loans), reverse=True)
+
+    return members_schema.jsonify(most_active), 200
     
     
 
