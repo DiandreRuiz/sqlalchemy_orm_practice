@@ -86,9 +86,12 @@ def update_member(member_id):
 def get_most_active():
     query = select(Member)
     members = db.session.execute(query).scalars().all()
+    if not members:
+        return jsonify({"message": "No members in system"}), 400
     
-    for member in members:
-        print(member.email, len(member.loans))
+    most_active = sorted(members, key=lambda m: len(m.loans))
+    print(most_active)
+    
     
 
 
