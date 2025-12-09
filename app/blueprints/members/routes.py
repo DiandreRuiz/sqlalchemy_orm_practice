@@ -93,9 +93,15 @@ def get_most_active():
 
     return members_schema.jsonify(most_active), 200
     
+# Takes query parameter: www.website.com/members/search?{key}={value}
+@members_bp.route("/search", methods=["GET"])
+def get_search_member():
+    search_name = request.args.get("name")
+    query = select(Member).where(Member.name.like(f"%{search_name}%"))
+    member_search_result = db.session.execute(query).scalars().all()
     
-
-
+    return members_schema.jsonify(member_search_result), 200
+    
 # Delete a member based his / her id
 @members_bp.route("/<int:member_id>", methods=['DELETE'])
 def delete_member(member_id):
